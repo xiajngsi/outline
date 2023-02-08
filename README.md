@@ -9,20 +9,20 @@ chrome 下载插件后页面右边会出现个贴边且上下居中的按钮小�
 
 ```
 // html 使用
-  <script  src="/dist/outline.iife.js"></script>
-  <script>
-      js_outline()
-  </script>
+<script  src="/dist/outline.iife.js"></script>
+<script>
+    js_outline()
+</script>
 
-  // npm 包, 还没发到 npm, 发好后可以如下使用
-  // 运行下面命令装包
-  npm install outline
-  // 代码内部
-  import Outline from 'outline'
-  new Outline(el, options)
+// npm 包, 还没发到 npm, 发好后可以如下使用
+// 运行下面命令装包
+npm install outline
+// 代码内部
+import Outline from 'outline'
+new Outline(el, options)
 
-  // 或
-  import {outline} from 'outline'
-  outline(el, options)
+// 或
+import {outline} from 'outline'
+outline(el, options)
 ```
 
