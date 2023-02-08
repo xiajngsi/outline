@@ -6,22 +6,50 @@ interface TreeOptions {
     prefix?: string // 样式名的前缀 默认 ‘js’
 }
 
+const defaultPriorityIds = ['article', 'main', 'body']
+
 const defaultOptions = {
   headerTags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-  contentId: ['article', 'main', 'body'],
   prefix: 'js'
 }
+
+
+interface TreeDataItem {
+  children: TreeDataItem[],
+  nodeName: string,
+  headerNumber?: number,
+  innerText?: string, // 文本名称
+  tagNodeIndex?: number | string, // 在所有标题中的 index， 主要为了做节点间索引
+  [key: string]: any,
+}
+
 class Tree {
-  treeData: any = {}
+  treeData: TreeDataItem = {children: [], nodeName: ''}
   options: TreeOptions
   wrapClassName: string
   activeItemClassName: string
   constructor(options: TreeOptions) {
-    console.log('xxx Tree contructor')
-    this.options = deepMerge(defaultOptions, options)
+    const adaptedOptions = this.getDefaultOptions()
+    this.options = deepMerge(adaptedOptions, options)
     this.wrapClassName = `_${this.options.prefix}-tree-wrap`;
     this.activeItemClassName = `${this.options.prefix}-item-active`;
   }
+
+  // 不同网页情况的适配
+  getDefaultOptions = () => {
+    let headerTags: string[] = defaultOptions.headerTags;
+    const host = window.location.host;
+    if (host.startsWith('aliyuque')) {
+      const headTagPrefix = 'ne-h';
+      headerTags = new Array(6).map((item, index) => `${headTagPrefix}${index}`)
+    }
+  
+    let contentId;
+    contentId = defaultPriorityIds.find((selector) => {
+      return document.querySelector(selector);
+    });
+    return { headerTags, contentId, prefix: defaultOptions.prefix };
+  };
 
   getClassNames() {
     const {prefix} = this.options
@@ -67,8 +95,8 @@ class Tree {
     // todo: generatorClose 抽象出来
     let ele = `${closedomStr}<div class='${prefix}-header'>outlint</div><ul class = "${prefix}-tree">`;
   
-    const traverse = (nodeList: any, level: any) => {
-      nodeList.forEach((node: any) => {
+    const traverse = (nodeList: TreeDataItem[], level: number) => {
+      nodeList.forEach((node: TreeDataItem) => {
         const textNodeHtml = `${node.innerText} <span style='font-weight: 600'>${node.children ? `(${node.children.length})` : ''}</span>`;
         const aElement = level == 0 ? `<a class="has-arrow" aria-expanded="true" >${textNodeHtml}</a>` : `<a aria-expanded="true" >${textNodeHtml}</a>`;
         ele = ele + `<li style="padding-left:${padding * level}px" class='${outlineItemClass}' data-tag='${node.tagNodeIndex}'>${aElement}</li>`;
@@ -77,7 +105,9 @@ class Tree {
         }
       });
     };
-    traverse(this.treeData.children, 1);
+    if(this.treeData.children) {
+      traverse(this.treeData.children, 1);
+    }
     ele += '</ul>';
     wrap.innerHTML = ele;
   
@@ -169,11 +199,12 @@ class Tree {
       const dataId = curr.dataset.id;
       const headNumber = getHeaderNumber(curr);
       const item = {
-        ...curr,
+        // ...curr,
         nodeName,
         headNumber,
         innerText,
-        tagNodeIndex: dataId || this.getTagNodeIndex(index)
+        tagNodeIndex: dataId || this.getTagNodeIndex(index),
+        children: []
       };
       if (!dataId) {
         nodeAddAnchorName(curr, item.tagNodeIndex);
@@ -197,7 +228,7 @@ class Tree {
             lastItem.children = [curr];
             // 1 > 2 > 2 上个元素的 children 加上这个元素
           } else if (prevNodeNumber == currNodeNumber) {
-            const target = findParant(lastItem.tagNodeIndex, this.treeData);
+            const target = findParant(lastItem.tagNodeIndex!, this.treeData);
             if (target) {
               target.children.push(item);
             } else {
@@ -208,8 +239,8 @@ class Tree {
           } else {
             // 如果当前 header 小于 前一个，需要找到前一个的父级中和当前 header 相同的元素，找到该元素的父级元素 push 当前 item
             // 找到和当前 number - 1 相等元素 push item
-            const sameNumberItem = findTargetPathByPrevIndex(curr, lastItem.tagNodeIndex, this.treeData);
-            const parent = findParant(sameNumberItem.tagNodeIndex, this.treeData);
+            const sameNumberItem = findTargetPathByPrevIndex(curr, lastItem.tagNodeIndex!, this.treeData);
+            const parent = findParant(sameNumberItem.tagNodeIndex!, this.treeData);
             // 没找到父元素则放到上个元素的 children 中
             if (parent) {
               parent.children.push(item);
@@ -228,10 +259,10 @@ class Tree {
   
 }
 
-const findParant = (prevNodeIndex: number, treeData: any) => {
-  const stack: any[] = [];
-  let target: any;
-  const find = (list: any) => {
+const findParant = (prevNodeIndex: number | string, treeData: TreeDataItem) => {
+  const stack: TreeDataItem[] = [];
+  let target: TreeDataItem;
+  const find = (list: TreeDataItem[]) => {
     for (var index = 0; index < list.length; index++) {
       const item = list[index];
       stack.push(item);
@@ -257,15 +288,15 @@ const findParant = (prevNodeIndex: number, treeData: any) => {
  * @param {*} prevNodeIndex // 上一个元素的 index
  * @returns
  */
-const findTargetPathByPrevIndex = (curr: any, prevNodeIndex: number, treeData: any) => {
+const findTargetPathByPrevIndex = (curr: TreeDataItem, prevNodeIndex: number | string, treeData: TreeDataItem) => {
   const number: number = getHeaderNumber(curr);
   // 上个元素的链路元素
-  const stack: any[] = [];
+  const stack: TreeDataItem[] = [];
   // 上个元素的链路 index, 方面找到对应的节点
-  const pathStack:any[] = [];
-  let prevData: any;
-  const find = (list: any) => {
-    list.forEach((item: any, index: number) => {
+  const pathStack: number[] = [];
+  let prevData: TreeDataItem;
+  const find = (list: TreeDataItem[]) => {
+    list.forEach((item: TreeDataItem, index: number) => {
       stack.push(item);
       pathStack.push(index);
       if (item.tagNodeIndex === prevNodeIndex) {
@@ -288,7 +319,7 @@ const findTargetPathByPrevIndex = (curr: any, prevNodeIndex: number, treeData: a
 
   let sameNumberItem;
   // 找到当前 header number, 没有则当前 number 往上 + 1 再找
-  const temArr = new Array(prevData.headNumber - number).fill('');
+  const temArr = new Array(prevData!.headNumber - number).fill('');
   temArr.forEach(() => {
     const result = tr();
     if (result) {
@@ -302,7 +333,7 @@ const findTargetPathByPrevIndex = (curr: any, prevNodeIndex: number, treeData: a
     return sameNumberItem;
   }
   // 没找到则返回上个元素
-  return prevData;
+  return prevData!;
 };
 
 export { Tree }

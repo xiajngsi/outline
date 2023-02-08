@@ -19,7 +19,7 @@ function isObject(item: any): item is object {
 }
 
 
-export const getHeaderNumber = (node: Node) => {
+export const getHeaderNumber = (node: {nodeName: string}) => {
   return Number(node.nodeName.slice(-1))
 };
 
