@@ -1,0 +1,10 @@
+:root {
+  --toggler-color-bg: #f5f5f5;
+  --color-border-default: #e6e6e6;
+}
+/* @media (prefers-color-scheme: dark) {
+  --toggler-color-bg: dard;
+}
+a {
+  decorator: none;
+} */
