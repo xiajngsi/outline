@@ -27,6 +27,8 @@ function setStyle(innerStyle: string) {
   styleHtml += innerStyle;
 }
 
+const defaultPriorityIds = ['article', 'main', 'body']
+
 class Outline {
   tree: Tree
   options?: Options
@@ -35,8 +37,9 @@ class Outline {
 
   //@ts-ignore
   constructor(el?: HTMLElement, options: Options) {
-    console.log('Outline contructor')
-    this.options = deepMerge(defaultOptions, options)
+    const adaptedOptions = this.getDefaultOptions()
+
+    this.options = deepMerge(adaptedOptions, options)
     this.domId = `${this.options.prefix}-outline`
     this.styleDomId = `${this.options.prefix}-style`;
     this.tree = new Tree(this.options)
@@ -44,8 +47,24 @@ class Outline {
     this.init(el)
   }
 
+  // 不同网页情况的适配
+  getDefaultOptions = () => {
+    let headerTags: string[] = defaultOptions.headerTags;
+    const host = window.location.host;
+    if (host.startsWith('aliyuque')) {
+      const headTagPrefix = 'ne-h';
+      //@ts-ignore
+      headerTags = new Array(6).map((item, index) => `${headTagPrefix}${index}`)
+    }
+  
+    let contentId;
+    contentId = defaultPriorityIds.find((selector) => {
+      return document.querySelector(selector);
+    });
+    return { headerTags, contentId, prefix: defaultOptions.prefix };
+  };
 
-  init(el?: HTMLElement) {
+  init = (el?: HTMLElement) => {
     const allTags = this.tree.getAllTags();
     if (!allTags.length) {
       return;
@@ -60,7 +79,7 @@ class Outline {
     }
   }
 
-  events() {
+  events= () => {
     const {outlineItemClass, toggleClassName, wrapClassName, closeClassName} = this.getClassNames()
     document.querySelectorAll(`.${outlineItemClass}`).forEach((item) => {
       const handleClick = () => {
@@ -83,53 +102,51 @@ class Outline {
       (document.querySelector(`.${wrapClassName}`) as HTMLElement)?.style.setProperty('display', 'none');
       (document.querySelector(`.${toggleClassName}`) as HTMLElement)?.style.setProperty('display', 'block');
     });
-}
-
-getClassNames() {
-  const {prefix} = this.options!
-  return {
-    ...this.tree.getClassNames(),
-    outlineItemClass: `${prefix}-outline-item`,
-    toggleClassName: `${prefix}-toggle`,
-
   }
 
-}
-
-activeHandler() {
-  const {outlineItemClass, activeItemClassName} = this.getClassNames()
-  const tags = this.tree.getAllTags();
-  document.querySelectorAll(`.${outlineItemClass}`).forEach((node) => {
-    node.classList.remove(activeItemClassName);
-  });
-
-  let lastDisNode;
-  let viewFirstEleDis;
-  const viewFirstEleIndex = tags.findIndex((tag) => {
-    const ele = getHeadingEleByDataId(tag.tagNodeIndex);
-    const dis = ele!.getBoundingClientRect().top;
-    viewFirstEleDis = dis;
-    return dis > 0;
-  });
-  if (viewFirstEleIndex == -1) {
-    lastDisNode?.[tags.length - 1];
-  }
-  if (viewFirstEleIndex == 0) {
-    lastDisNode = tags[0];
-  }
-  if (viewFirstEleIndex > 0) {
-    if (viewFirstEleDis && viewFirstEleDis < 50) {
-      lastDisNode = tags[viewFirstEleIndex];
-    } else {
-      lastDisNode = tags[viewFirstEleIndex - 1];
+  getClassNames = () => {
+    const {prefix} = this.options!
+    return {
+      ...this.tree.getClassNames(),
+      outlineItemClass: `${prefix}-outline-item`,
+      toggleClassName: `${prefix}-toggle`,
     }
   }
-  if(lastDisNode) {
-    getOutlineItemByDataTag(lastDisNode.tagNodeIndex!)?.classList.add(activeItemClassName);
-  }
-}
 
-  generatorDom() {
+  activeHandler = () => {
+    const {outlineItemClass, activeItemClassName} = this.getClassNames()
+    const tags = this.tree.getAllTags();
+    document.querySelectorAll(`.${outlineItemClass}`).forEach((node) => {
+      node.classList.remove(activeItemClassName);
+    });
+
+    let lastDisNode;
+    let viewFirstEleDis;
+    const viewFirstEleIndex = tags.findIndex((tag) => {
+      const ele = getHeadingEleByDataId(tag.tagNodeIndex);
+      const dis = ele!.getBoundingClientRect().top;
+      viewFirstEleDis = dis;
+      return dis > 0;
+    });
+    if (viewFirstEleIndex == -1) {
+      lastDisNode?.[tags.length - 1];
+    }
+    if (viewFirstEleIndex == 0) {
+      lastDisNode = tags[0];
+    }
+    if (viewFirstEleIndex > 0) {
+      if (viewFirstEleDis && viewFirstEleDis < 50) {
+        lastDisNode = tags[viewFirstEleIndex];
+      } else {
+        lastDisNode = tags[viewFirstEleIndex - 1];
+      }
+    }
+    if(lastDisNode) {
+      getOutlineItemByDataTag(lastDisNode.tagNodeIndex!)?.classList.add(activeItemClassName);
+    }
+  }
+
+  generatorDom = () => {
     const body = document.querySelector('body');
     const outlineEle = h('div', '', {id: this.domId})
     // const outlineEle = document.createElement('div');
@@ -156,7 +173,7 @@ activeHandler() {
     body?.appendChild(outlineEle!.el as Node);
   }
 
-  generatorToggle() {
+  generatorToggle = () => {
     const prefix = this.options!.prefix
     const toggleClassName = `${prefix}-toggle`;
     const html = `
@@ -267,7 +284,7 @@ activeHandler() {
     return { node: toggleWrap, style: toggleStyle };
   }
 
-  insertStyle() {
+  insertStyle = () => {
     const styleEl = h('style', '', {id: this.styleDomId})
     styleEl.innerHTML(styleHtml)
     const head = document.querySelector('head')
@@ -277,7 +294,25 @@ activeHandler() {
     }
   }
 
-  clear() {
+  onLoad = () => {
+    window.addEventListener('load', () => {
+      const allTags = this.tree.getAllTags();
+      let times = 0;
+      let interval: number;
+      if (!allTags.length) {
+        interval = setInterval(() => {
+          times = times + 1;
+          if (times >= 3) {
+            clearInterval(interval);
+          }
+          this.init();
+        }, 500);
+        return;
+      }
+    });
+  }
+
+  clear = () => {
     const styleDom = document.querySelector(`#${this.styleDomId}`);
     const bodyDom = document.querySelector(`#${this.domId}`);
     if (styleDom) {

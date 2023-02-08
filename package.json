@@ -10,7 +10,7 @@
   "module": "./dist/outline.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build -w",
     "preview": "vite preview"
   },
   "devDependencies": {

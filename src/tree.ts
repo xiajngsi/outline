@@ -1,16 +1,9 @@
-import {deepMerge, getHeaderNumber, nodeAddAnchorName} from './help'
+import { getHeaderNumber, nodeAddAnchorName} from './help'
 
 interface TreeOptions {
     headerTags?: string[], // 取标题的 tag, 必需能用罗文数字表达层级，默认 html 标签的 h1, h2 等，主要支持类似 yuque 改造后的 ne-h1 这种形式
     contentId?: string[] // 获取哪个内容的标题，默认的优先级是['article', 'main', 'body']
     prefix?: string // 样式名的前缀 默认 ‘js’
-}
-
-const defaultPriorityIds = ['article', 'main', 'body']
-
-const defaultOptions = {
-  headerTags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-  prefix: 'js'
 }
 
 
@@ -29,27 +22,10 @@ class Tree {
   wrapClassName: string
   activeItemClassName: string
   constructor(options: TreeOptions) {
-    const adaptedOptions = this.getDefaultOptions()
-    this.options = deepMerge(adaptedOptions, options)
+    this.options = options
     this.wrapClassName = `_${this.options.prefix}-tree-wrap`;
     this.activeItemClassName = `${this.options.prefix}-item-active`;
   }
-
-  // 不同网页情况的适配
-  getDefaultOptions = () => {
-    let headerTags: string[] = defaultOptions.headerTags;
-    const host = window.location.host;
-    if (host.startsWith('aliyuque')) {
-      const headTagPrefix = 'ne-h';
-      headerTags = new Array(6).map((item, index) => `${headTagPrefix}${index}`)
-    }
-  
-    let contentId;
-    contentId = defaultPriorityIds.find((selector) => {
-      return document.querySelector(selector);
-    });
-    return { headerTags, contentId, prefix: defaultOptions.prefix };
-  };
 
   getClassNames() {
     const {prefix} = this.options
@@ -141,7 +117,7 @@ class Tree {
         right:0;
         height: calc(100vh);
         width: 300px;
-        z-index: 9999;
+        z-index: 10002;
         overflow: auto;
         border-left: 1px solid #d0d7de;
       }
@@ -181,7 +157,6 @@ class Tree {
       }
      
     `;
-    console.log('xxx tree node', wrap)
     return { node: wrap, style: treeStyle };
   };
 
@@ -213,7 +188,7 @@ class Tree {
     });
   };
   // 123 23 234 或者 134 234
-  getTags() {
+  getTags () {
     const curTagNodes = this.getAllTags();
     let lastItem = this.treeData;
     if (curTagNodes.length) {
@@ -255,8 +230,6 @@ class Tree {
       });
     }
   }
-
-  
 }
 
 const findParant = (prevNodeIndex: number | string, treeData: TreeDataItem) => {
@@ -301,7 +274,6 @@ const findTargetPathByPrevIndex = (curr: TreeDataItem, prevNodeIndex: number | s
       pathStack.push(index);
       if (item.tagNodeIndex === prevNodeIndex) {
         prevData = item;
-        return item;
       } else if (item.children) {
         find(item.children);
       }
