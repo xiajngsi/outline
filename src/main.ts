@@ -1,13 +1,21 @@
 import {Tree, TreeOptions} from './tree'
-import {h} from './element';
-import { deepMerge } from './help';
-interface Options extends TreeOptions{
-  
+import { h } from './element';
+import { getContentIdBySiteMap} from './help';
+interface Options extends TreeOptions {
+  siteContentIdMap?: Record<string, string>// 网站和文章内容选择器的 map
+  contentIds?: string[] // 从一个选择器往后遍历，找到了选择器就会从选择器中生成 toc
+}
+
+const defaultWebsiteMap = {
+  'reactrouter.com': '.md-prose',
+  'infoq.cn': '.article-main',
+  'cnblogs.com': '#cnblogs_post_body'
 }
 
 const defaultOptions = {
   headerTags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-  contentId: ['article', 'main', 'body'],
+  contentIds: ['article', 'main', 'body'],
+  siteContentIdMap: defaultWebsiteMap, // 和 contentId 同时传，优先级比 contentId 高
   prefix: 'js'
 }
 
@@ -27,60 +35,91 @@ function setStyle(innerStyle: string) {
   styleHtml += innerStyle;
 }
 
-const defaultPriorityIds = ['article', 'main', 'body']
-
 class Outline {
   tree: Tree
-  options?: Options
+  options?: TreeOptions
   domId?: string
   styleDomId?: string
+  treeNode: any
+  originOptions: Options
 
   //@ts-ignore
   constructor(el?: HTMLElement, options: Options) {
-    const adaptedOptions = this.getDefaultOptions()
-
-    this.options = deepMerge(adaptedOptions, options)
+    this.originOptions = options
+    this.options = this.transformOptions(options)
+    
     this.domId = `${this.options.prefix}-outline`
     this.styleDomId = `${this.options.prefix}-style`;
-    this.tree = new Tree(this.options)
-    
-    this.init(el)
+    this.init() 
   }
 
-  // 不同网页情况的适配
-  getDefaultOptions = () => {
-    let headerTags: string[] = defaultOptions.headerTags;
-    const host = window.location.host;
-    if (host.startsWith('aliyuque')) {
-      const headTagPrefix = 'ne-h';
-      //@ts-ignore
-      headerTags = new Array(6).map((item, index) => `${headTagPrefix}${index}`)
+  transformOptions = (options?: Options) => {
+    const {siteContentIdMap = {}, contentIds = [], headerTags = [], prefix } = options || {}
+    const resultOptions: TreeOptions = {...options}
+
+    let siteContentId
+    let contentPiriority = [...contentIds, ...defaultOptions.contentIds]
+
+    if(siteContentIdMap) {
+      siteContentId = getContentIdBySiteMap({...defaultOptions.siteContentIdMap, ...siteContentIdMap})  
+      if(siteContentId) {
+        contentPiriority = [siteContentId, ...contentPiriority]
+      }   
     }
-  
-    let contentId;
-    contentId = defaultPriorityIds.find((selector) => {
-      return document.querySelector(selector);
-    });
-    return { headerTags, contentId, prefix: defaultOptions.prefix };
-  };
+    const resultId = contentPiriority.find((selector) => {
+        return document.querySelector(selector);
+      });
+    resultOptions.contentId = resultId
+
+    const {host} = location  
+    if(!Array.isArray(headerTags) || headerTags.length === 0) {
+      if ( host.startsWith('aliyuque')) {
+        const headTagPrefix = 'ne-h';
+        //@ts-ignore
+        resultOptions.headerTags = new Array(6).map((item, index) => `${headTagPrefix}${index}`)
+      } else {
+        resultOptions.headerTags = defaultOptions.headerTags
+      }
+    }
+
+    if(!prefix) {
+      resultOptions.prefix = defaultOptions.prefix
+    }
+
+    return resultOptions
+  }
 
   init = (el?: HTMLElement) => {
+    this.clear()
+    if(el) {
+    } else {
+      this.generatorDom()
+      this.insertStyle(styleHtml, this.styleDomId)
+      this.events()
+    }
+  }
+  treeStyleId = 'treeStyleId'
+
+  handleOpen = () => {
+    
+    const options = this.transformOptions(this.originOptions)
+    this.tree = new Tree(options, this.getClassNames())
     const allTags = this.tree.getAllTags();
     if (!allTags.length) {
       return;
     }
-    this.clear()
+    const { closeClassName, outlineItemClass, toggleClassName } = this.getClassNames()
     this.tree.getTags()
-    if(el) {
-    } else {
-      this.generatorDom()
-      this.insertStyle()
-      this.events()
-    }
-  }
-
-  events= () => {
-    const {outlineItemClass, toggleClassName, wrapClassName, closeClassName} = this.getClassNames()
+    // @ts-ignore
+    document.querySelector(`.${toggleClassName}`)?.style.setProperty('display', 'none');
+    // 目录展示
+    const { node: treeNode, style: treeStyle } = this.tree.generatorTree();
+    this.treeNode = treeNode
+    document.querySelector(`#${this.domId}`)?.appendChild(treeNode);
+    this.insertStyle(treeStyle, this.treeStyleId)
+    document.querySelector(`.${closeClassName}`)?.addEventListener('click', () => {
+      this.handleClose()
+    });
     document.querySelectorAll(`.${outlineItemClass}`).forEach((item) => {
       const handleClick = () => {
         // @ts-ignore
@@ -93,22 +132,36 @@ class Outline {
       };
       item.addEventListener('click', handleClick);
     });
+  }
+
+  handleClose = () => { 
+    const { toggleClassName } = this.getClassNames()
+    this.treeNode.remove() 
+    this.clearTreeStyle()  
+    // @ts-ignore
+    document.querySelector(`.${toggleClassName}`)?.style.setProperty('display', 'block');
+
+  }
+
+  events= () => {
+    const { toggleClassName } = this.getClassNames()
     window.addEventListener('scroll', this.activeHandler);
     document.querySelector(`.${toggleClassName}`)?.addEventListener('mouseenter', () => {
-      (document.querySelector(`.${wrapClassName}`) as HTMLElement)?.style.setProperty('display', 'block');
-      (document.querySelector(`.${toggleClassName}`) as HTMLElement)?.style.setProperty('display', 'none');
-    });
-    document.querySelector(`.${closeClassName}`)?.addEventListener('click', () => {
-      (document.querySelector(`.${wrapClassName}`) as HTMLElement)?.style.setProperty('display', 'none');
-      (document.querySelector(`.${toggleClassName}`) as HTMLElement)?.style.setProperty('display', 'block');
+      this.handleOpen()
     });
   }
 
   getClassNames = () => {
     const {prefix} = this.options!
+    const wrapClassName = `_${prefix}-tree-wrap`;
+    const activeItemClassName = `${prefix}-item-active`;
+    const outlineItemClass = `${prefix}-outline-item`;
+
     return {
-      ...this.tree.getClassNames(),
-      outlineItemClass: `${prefix}-outline-item`,
+      wrapClassName,
+      activeItemClassName,
+      outlineItemClass,
+      closeClassName:`${prefix}-close`,
       toggleClassName: `${prefix}-toggle`,
     }
   }
@@ -149,22 +202,7 @@ class Outline {
   generatorDom = () => {
     const body = document.querySelector('body');
     const outlineEle = h('div', '', {id: this.domId})
-    // const outlineEle = document.createElement('div');
-    // outlineEle.id = domId;
-  
-    // const ul = document.createElement('ul');
-    // ul.id = 'metismenu'
-    // console.log('treeData', treeData);
-  
-    // 关闭按钮
-  
-    // 目录展示
-    const { node: treeNode, style: treeStyle } = this.tree.generatorTree();
-  
-    outlineEle.child(treeNode);
-  
-    setStyle(treeStyle);
-  
+
     // toggleEle
     const { node: toggleEle, style: toggleStyle } = this.generatorToggle();
   
@@ -284,13 +322,15 @@ class Outline {
     return { node: toggleWrap, style: toggleStyle };
   }
 
-  insertStyle = () => {
-    const styleEl = h('style', '', {id: this.styleDomId})
-    styleEl.innerHTML(styleHtml)
-    const head = document.querySelector('head')
-    if(head) {
-      const headEl = h(head)
-      headEl.child(styleEl);
+  insertStyle = (_styleHtml: string, id?: string) => {
+    if(id) {
+      const styleEl = h('style', '', {id})
+      styleEl.innerHTML(_styleHtml)
+      const head = document.querySelector('head')
+      if(head) {
+        const headEl = h(head)
+        headEl.child(styleEl);
+      }
     }
   }
 
@@ -310,6 +350,11 @@ class Outline {
         return;
       }
     });
+  }
+
+  clearTreeStyle = () => {
+    const treeStyle = document.querySelector(`#${this.treeStyleId}`);
+    treeStyle!.remove();
   }
 
   clear = () => {

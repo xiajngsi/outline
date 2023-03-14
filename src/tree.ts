@@ -2,7 +2,7 @@ import { getHeaderNumber, nodeAddAnchorName} from './help'
 
 interface TreeOptions {
     headerTags?: string[], // 取标题的 tag, 必需能用罗文数字表达层级，默认 html 标签的 h1, h2 等，主要支持类似 yuque 改造后的 ne-h1 这种形式
-    contentId?: string[] // 获取哪个内容的标题，默认的优先级是['article', 'main', 'body']
+    contentId?: string // 获取哪个内容的标题，最高优先级， 默认的优先级是['article', 'main', 'body']
     prefix?: string // 样式名的前缀 默认 ‘js’
 }
 
@@ -16,33 +16,27 @@ interface TreeDataItem {
   [key: string]: any,
 }
 
+export interface ClassNames {
+  wrapClassName: string,
+  activeItemClassName: string,
+  outlineItemClass: string,
+  closeClassName: string
+}
 class Tree {
   treeData: TreeDataItem = {children: [], nodeName: ''}
   options: TreeOptions
   wrapClassName: string
   activeItemClassName: string
-  constructor(options: TreeOptions) {
+  classNames: ClassNames
+  constructor(options: TreeOptions, classNames: ClassNames) {
+    this.classNames = classNames
     this.options = options
     this.wrapClassName = `_${this.options.prefix}-tree-wrap`;
     this.activeItemClassName = `${this.options.prefix}-item-active`;
   }
 
-  getClassNames() {
-    const {prefix} = this.options
-    const wrapClassName = `_${prefix}-tree-wrap`;
-    const activeItemClassName = `${prefix}-item-active`;
-    const outlineItemClass = `${prefix}-outline-item`;
-
-    return {
-      wrapClassName,
-      activeItemClassName,
-      outlineItemClass,
-      closeClassName:`${prefix}-close`
-    }
-  }
-
   generatorClose() {
-    const {closeClassName} = this.getClassNames()
+    const {closeClassName} = this.classNames
     const str = `<span class='${closeClassName}'>
     <svg t="1661342858920" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7263" width="15" height="15"><path d="M563.8 512l262.5-312.9c4.4-5.2 0.7-13.1-6.1-13.1h-79.8c-4.7 0-9.2 2.1-12.3 5.7L511.6 449.8 295.1 191.7c-3-3.6-7.5-5.7-12.3-5.7H203c-6.8 0-10.5 7.9-6.1 13.1L459.4 512 196.9 824.9c-4.4 5.2-0.7 13.1 6.1 13.1h79.8c4.7 0 9.2-2.1 12.3-5.7l216.5-258.1 216.5 258.1c3 3.6 7.5 5.7 12.3 5.7h79.8c6.8 0 10.5-7.9 6.1-13.1L563.8 512z" p-id="7264"></path></svg>
     </span>`;
@@ -60,20 +54,21 @@ class Tree {
   generatorTree = () => {
     const prefix = this.options.prefix
     const wrapClassName = this.wrapClassName
-    const outlineItemClass = `${prefix}-outline-item`;
+    const outlineItemClass = this.classNames.outlineItemClass;
     const activeItemClassName = this.activeItemClassName
 
     const wrap = document.createElement('div');
     wrap.className = wrapClassName;
-    wrap.setAttribute('style', `display: none`);
+    // wrap.setAttribute('style', `display: none`);
     const padding = 10;
     const { domStr: closedomStr, style: closeStyle } = this.generatorClose();
     // todo: generatorClose 抽象出来
-    let ele = `${closedomStr}<div class='${prefix}-header'>outlint</div><ul class = "${prefix}-tree">`;
+    let ele = `${closedomStr}<div class='${prefix}-header'>TOC</div><ul class = "${prefix}-tree">`;
   
     const traverse = (nodeList: TreeDataItem[], level: number) => {
       nodeList.forEach((node: TreeDataItem) => {
-        const textNodeHtml = `${node.innerText} <span style='font-weight: 600'>${node.children ? `(${node.children.length})` : ''}</span>`;
+        // const textNodeHtml = `${node.innerText} <span style='font-weight: 600'>${node.children ? `(${node.children.length})` : ''}</span>`;
+        const textNodeHtml = `${node.innerText} ${node.children && node.children.length ? `<span style='font-weight: 600'>(${node.children.length})</span>`: ''}`;
         const aElement = level == 0 ? `<a class="has-arrow" aria-expanded="true" >${textNodeHtml}</a>` : `<a aria-expanded="true" >${textNodeHtml}</a>`;
         ele = ele + `<li style="padding-left:${padding * level}px" class='${outlineItemClass}' data-tag='${node.tagNodeIndex}'>${aElement}</li>`;
         if (node.children) {
@@ -128,15 +123,7 @@ class Tree {
         font-weight: 600;
         font-size: 16px;
       }
-      // @media (prefers-color-scheme: dark) {
-      //   ._${prefix}-tree-wrap {
-      //     background-color: black;
-      //     color: white
-      //   }
-      //   .${prefix}-outline-item a {
-      //     color: white;
-      //   }
-      // }
+
       .${activeItemClassName} a {
         color: var(--primary-color, red)
       }
@@ -187,6 +174,10 @@ class Tree {
       return item;
     });
   };
+
+  clear = () => {
+    this.treeData = {children: [], nodeName: ''}
+  }
   // 123 23 234 或者 134 234
   getTags () {
     const curTagNodes = this.getAllTags();

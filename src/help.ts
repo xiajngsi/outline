@@ -26,3 +26,14 @@ export const getHeaderNumber = (node: {nodeName: string}) => {
 export const nodeAddAnchorName = (node: HTMLElement, tagNodeIndex: string) => {
   node.setAttribute('data-id', tagNodeIndex);
 };
+
+export const getContentIdBySiteMap = (siteContentIdMap: Record<string, string>) => {
+  const host = location.host
+  const target = Object.keys(siteContentIdMap).find((websitePathname) => {
+    return host.endsWith(websitePathname)
+  })
+  if(target) {
+    return siteContentIdMap[target]
+  }
+  return ''
+}
