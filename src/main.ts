@@ -1,6 +1,8 @@
 import {Tree, TreeOptions} from './tree'
 import { h } from './element';
 import { getContentIdBySiteMap} from './help';
+import Readability from '@mozilla/readability/Readability'
+import axios from 'axios'
 interface Options extends TreeOptions {
   siteContentIdMap?: Record<string, string>// 网站和文章内容选择器的 map
   contentIds?: string[] // 从一个选择器往后遍历，找到了选择器就会从选择器中生成 toc
@@ -36,7 +38,7 @@ function setStyle(innerStyle: string) {
 }
 
 class Outline {
-  tree: Tree
+  tree?: Tree
   options?: TreeOptions
   domId?: string
   styleDomId?: string
@@ -98,10 +100,41 @@ class Outline {
       this.events()
     }
   }
+
+  
   treeStyleId = 'treeStyleId'
 
+  getArticleContent = () => {
+    var documentClone = document.cloneNode(true);
+    var article = new Readability(documentClone).parse();
+    const text = article?.textContent
+
+    axios.post("https://lp.penseer.com/gpt", {
+      "message": `Summarize this url content in chinese : ${location.href}`
+    }).then(result => console.log(result))
+      .catch(error => console.log('error', error));
+
+    return axios.post("https://lp.penseer.com/gpt", {
+      "message": `Summarize  the following text in chinese : ${text}`
+    }).then(result => console.log(result))
+      .catch(error => console.log('error', error));
+  } 
+
+  generateArticleButton = () => {
+    const button = h('button', undefined, {text: 'dianji'})
+    button.innerHTML('点击')
+    button.addEvent('click', () => {
+      this.getArticleContent().then((result) => {
+        const bodyContentNode = document.body.firstChild
+
+        document.body.insertBefore(result.response, bodyContentNode) 
+      })
+    })
+    return button 
+  }
+
   handleOpen = () => {
-    
+    // this.getArticleContent()
     const options = this.transformOptions(this.originOptions)
     this.tree = new Tree(options, this.getClassNames())
     const allTags = this.tree.getAllTags();
@@ -115,6 +148,9 @@ class Outline {
     // 目录展示
     const { node: treeNode, style: treeStyle } = this.tree.generatorTree();
     this.treeNode = treeNode
+    const genSummarizeButton = this.generateArticleButton()
+    treeNode.insertBefore(genSummarizeButton.el, treeNode.firstChild)
+    // document.querySelector(`#${this.domId}`)?.appendChild(genSummarizeButton.el);
     document.querySelector(`#${this.domId}`)?.appendChild(treeNode);
     this.insertStyle(treeStyle, this.treeStyleId)
     document.querySelector(`.${closeClassName}`)?.addEventListener('click', () => {
@@ -168,7 +204,10 @@ class Outline {
 
   activeHandler = () => {
     const {outlineItemClass, activeItemClassName} = this.getClassNames()
-    const tags = this.tree.getAllTags();
+    if(!this.tree) {
+      return
+    }
+    const tags = this.tree?.getAllTags();
     document.querySelectorAll(`.${outlineItemClass}`).forEach((node) => {
       node.classList.remove(activeItemClassName);
     });
@@ -336,10 +375,10 @@ class Outline {
 
   onLoad = () => {
     window.addEventListener('load', () => {
-      const allTags = this.tree.getAllTags();
+      const allTags = this.tree?.getAllTags();
       let times = 0;
       let interval: number;
-      if (!allTags.length) {
+      if (!allTags?.length) {
         interval = setInterval(() => {
           times = times + 1;
           if (times >= 3) {
@@ -384,6 +423,8 @@ if (window) {
   // @ts-ignore
   window.js_outline = outline;
 }
+
+outline()
 
 export default Outline
 export { outline }
