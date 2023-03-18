@@ -116,7 +116,7 @@ class Tree {
         border-bottom: 1px solid #e4e6eb;
       }
       .${wrapClassName} {
-        padding: 16px 0;
+        padding: 16px 0 0 0;
         background-color: white;
         position: fixed;
         top: 0;
@@ -128,15 +128,16 @@ class Tree {
         border-left: 1px solid #d0d7de;
       }
       .${prefix}-tree {
-        margin-top: 16px;
-        height: calc(100vh - 60px);
+        margin: 16px 0 0 0;
+        height: calc(100vh - 75px);
         overflow-y: auto;
-        padding: 0
+        padding: 0;
       }
       .${prefix}-header {
         font-weight: 600;
         font-size: 18px;
         padding: 0 ${padding}px;
+        color: #333;
       }
 
       .${activeItemClassName} a, .${activeItemClassName} a:hover{

@@ -116,23 +116,7 @@ class Outline {
     }
   }
 
-  
   treeStyleId = 'treeStyleId'
-
- 
-
-  generateArticleButton = () => {
-    const button = h('button', undefined)
-    button.innerHTML('点击')
-    button.addEvent('click', () => {
-      this.getArticleContent().then((result) => {
-        const bodyContentNode = document.body.firstChild
-
-        document.body.insertBefore(result.response, bodyContentNode) 
-      })
-    })
-    return button 
-  }
 
   handleOpen = () => {
     // this.getArticleContent()
