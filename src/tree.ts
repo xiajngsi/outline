@@ -60,10 +60,10 @@ class Tree {
     const wrap = document.createElement('div');
     wrap.className = wrapClassName;
     // wrap.setAttribute('style', `display: none`);
-    const padding = 10;
+    const padding = 16;
     const { domStr: closedomStr, style: closeStyle } = this.generatorClose();
     // todo: generatorClose 抽象出来
-    let ele = `${closedomStr}<div class='${prefix}-header'>TOC</div><ul class = "${prefix}-tree">`;
+    let ele = `${closedomStr}<div class='${prefix}-header'>目录</div><ul class = "${prefix}-tree">`;
   
     const traverse = (nodeList: TreeDataItem[], level: number) => {
       nodeList.forEach((node: TreeDataItem) => {
@@ -87,9 +87,20 @@ class Tree {
       ${closeStyle}
       .${outlineItemClass} {
         list-style-type: none;
-        cursor: pointer
+        cursor: pointer;
+        line-height: 30px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        position: relative;
       }
       .${outlineItemClass} a {
+        color: #333;
+        text-decoration: none;
+        font-size: 14px;
+        cursor: pointer
+      }
+      .${outlineItemClass} a:hover {
         color: #333;
         text-decoration: none;
         font-size: 14px;
@@ -105,7 +116,7 @@ class Tree {
         border-bottom: 1px solid #e4e6eb;
       }
       .${wrapClassName} {
-        padding: 16px 8px;
+        padding: 16px 0;
         background-color: white;
         position: fixed;
         top: 0;
@@ -118,14 +129,30 @@ class Tree {
       }
       .${prefix}-tree {
         margin-top: 16px;
+        height: calc(100vh - 60px);
+        overflow-y: auto;
       }
       .${prefix}-header {
         font-weight: 600;
-        font-size: 16px;
+        font-size: 18px;
+        padding: 0 ${padding}px;
       }
 
       .${activeItemClassName} a {
-        color: var(--primary-color, red)
+        background: linear-gradient(83.21deg,#3245ff 0%,#bc52ee 100%);
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+      .${activeItemClassName}:before {
+        content: "";
+        position: absolute;
+        top: 4px;
+        left: 0px;
+        margin-top: 4px;
+        width: 4px;
+        height: 16px;
+        background: linear-gradient(83.21deg,#3245ff 0%,#bc52ee 100%);
+        border-radius: 0 4px 4px 0;
       }
       
       @media (prefers-color-scheme: light) {

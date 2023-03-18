@@ -33,6 +33,7 @@ let styleHtml = `
     decorator: none;
   }
 `;
+
 function setStyle(innerStyle: string) {
   styleHtml += innerStyle;
 }
@@ -91,11 +92,27 @@ class Outline {
     return resultOptions
   }
 
+  getBaseStyle = () => {
+    const baseHtml = `
+      ${this.domId} {
+        li {
+
+        }
+        ul {
+
+        }
+      }
+    `
+    return baseHtml
+  }
+
+
   init = (el?: HTMLElement) => {
     this.clear()
     if(el) {
     } else {
       this.generatorDom()
+      setStyle(this.getBaseStyle())
       this.insertStyle(styleHtml, this.styleDomId)
       this.events()
     }
@@ -108,20 +125,22 @@ class Outline {
     var documentClone = document.cloneNode(true);
     var article = new Readability(documentClone).parse();
     const text = article?.textContent
+    
 
-    axios.post("https://lp.penseer.com/gpt", {
-      "message": `Summarize this url content in chinese : ${location.href}`
-    }).then(result => console.log(result))
-      .catch(error => console.log('error', error));
+    // axios.post("https://lp.penseer.com/gpt", {
+    //   "message": `Summarize this url content in chinese : ${location.href}`
+    // }).then(result => console.log(result))
+    //   .catch(error => console.log('error', error));
 
     return axios.post("https://lp.penseer.com/gpt", {
-      "message": `Summarize  the following text in chinese : ${text}`
+      "message": `Summarize the article in chinese
+    ${text}`
     }).then(result => console.log(result))
       .catch(error => console.log('error', error));
   } 
 
   generateArticleButton = () => {
-    const button = h('button', undefined, {text: 'dianji'})
+    const button = h('button', undefined)
     button.innerHTML('点击')
     button.addEvent('click', () => {
       this.getArticleContent().then((result) => {
@@ -148,8 +167,8 @@ class Outline {
     // 目录展示
     const { node: treeNode, style: treeStyle } = this.tree.generatorTree();
     this.treeNode = treeNode
-    const genSummarizeButton = this.generateArticleButton()
-    treeNode.insertBefore(genSummarizeButton.el, treeNode.firstChild)
+    // const genSummarizeButton = this.generateArticleButton()
+    // treeNode.insertBefore(genSummarizeButton.el, treeNode.firstChild)
     // document.querySelector(`#${this.domId}`)?.appendChild(genSummarizeButton.el);
     document.querySelector(`#${this.domId}`)?.appendChild(treeNode);
     this.insertStyle(treeStyle, this.treeStyleId)
@@ -393,21 +412,21 @@ class Outline {
 
   clearTreeStyle = () => {
     const treeStyle = document.querySelector(`#${this.treeStyleId}`);
-    treeStyle!.remove();
+    treeStyle?.remove();
   }
 
   clear = () => {
     const styleDom = document.querySelector(`#${this.styleDomId}`);
     const bodyDom = document.querySelector(`#${this.domId}`);
-    if (styleDom) {
-      styleDom!.remove();
-    }
-    if (bodyDom) {
-      bodyDom!.remove();
-    }
+    styleDom?.remove();
+    bodyDom?.remove();
+    this.clearTreeStyle()
   }
-
 }
+
+
+
+
 
 function getOutlineItemByDataTag(tag: string) {
   return document.querySelector(`[data-tag=${tag}]`);
