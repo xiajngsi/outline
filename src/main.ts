@@ -1,8 +1,6 @@
 import {Tree, TreeOptions} from './tree'
 import { h } from './element';
 import { getContentIdBySiteMap} from './help';
-import Readability from '@mozilla/readability/Readability'
-import axios from 'axios'
 interface Options extends TreeOptions {
   siteContentIdMap?: Record<string, string>// 网站和文章内容选择器的 map
   contentIds?: string[] // 从一个选择器往后遍历，找到了选择器就会从选择器中生成 toc
@@ -121,23 +119,7 @@ class Outline {
   
   treeStyleId = 'treeStyleId'
 
-  getArticleContent = () => {
-    var documentClone = document.cloneNode(true);
-    var article = new Readability(documentClone).parse();
-    const text = article?.textContent
-    
-
-    // axios.post("https://lp.penseer.com/gpt", {
-    //   "message": `Summarize this url content in chinese : ${location.href}`
-    // }).then(result => console.log(result))
-    //   .catch(error => console.log('error', error));
-
-    return axios.post("https://lp.penseer.com/gpt", {
-      "message": `Summarize the article in chinese
-    ${text}`
-    }).then(result => console.log(result))
-      .catch(error => console.log('error', error));
-  } 
+ 
 
   generateArticleButton = () => {
     const button = h('button', undefined)

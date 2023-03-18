@@ -131,6 +131,7 @@ class Tree {
         margin-top: 16px;
         height: calc(100vh - 60px);
         overflow-y: auto;
+        padding: 0
       }
       .${prefix}-header {
         font-weight: 600;
@@ -138,11 +139,12 @@ class Tree {
         padding: 0 ${padding}px;
       }
 
-      .${activeItemClassName} a {
+      .${activeItemClassName} a, .${activeItemClassName} a:hover{
         background: linear-gradient(83.21deg,#3245ff 0%,#bc52ee 100%);
         -webkit-background-clip: text;
         color: transparent;
       }
+      
       .${activeItemClassName}:before {
         content: "";
         position: absolute;
