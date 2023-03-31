@@ -1,6 +1,8 @@
 import {Tree, TreeOptions} from './tree'
-import { h } from './element';
+import { ElementClass, h } from './element';
 import { getContentIdBySiteMap} from './help';
+import {Tab} from './tab';
+import {Container} from './container';
 interface Options extends TreeOptions {
   siteContentIdMap?: Record<string, string>// 网站和文章内容选择器的 map
   contentIds?: string[] // 从一个选择器往后遍历，找到了选择器就会从选择器中生成 toc
@@ -36,6 +38,10 @@ function setStyle(innerStyle: string) {
   styleHtml += innerStyle;
 }
 
+const tabs = [
+  {label: '目录', value: 'toc'}, 
+  {label: '总结', value: 'summarize'},
+  {label: '全文翻译', value: 'translate'}]
 class Outline {
   tree?: Tree
   options?: TreeOptions
@@ -43,6 +49,9 @@ class Outline {
   styleDomId?: string
   treeNode: any
   originOptions: Options
+
+
+  containerEl?: Container
 
   //@ts-ignore
   constructor(el?: HTMLElement, options: Options) {
@@ -103,12 +112,25 @@ class Outline {
     `
     return baseHtml
   }
+  tabInstance?: Tab
+
+  handleTabClick(key) {
+    console.log(key)
+  }
+
+  initTabs = () => {
+    this.tabInstance = new Tab(this.options)
+    this.tabInstance.generatorDom({tabs, onClick: this.handleTabClick})
+    this.insertStyle(this.tabInstance.getStyle(), 'tabStyle')
+    this.containerEl?.el.child(this.tabInstance?.el?.el)
+  }
 
 
   init = (el?: HTMLElement) => {
     this.clear()
     if(el) {
     } else {
+      
       this.generatorDom()
       setStyle(this.getBaseStyle())
       this.insertStyle(styleHtml, this.styleDomId)
@@ -118,6 +140,8 @@ class Outline {
 
   treeStyleId = 'treeStyleId'
 
+
+
   handleOpen = () => {
     // this.getArticleContent()
     const options = this.transformOptions(this.originOptions)
@@ -126,6 +150,8 @@ class Outline {
     if (!allTags.length) {
       return;
     }
+
+    this.containerEl = new Container(this.options)
     const { closeClassName, outlineItemClass, toggleClassName } = this.getClassNames()
     this.tree.getTags()
     // @ts-ignore
@@ -133,11 +159,17 @@ class Outline {
     // 目录展示
     const { node: treeNode, style: treeStyle } = this.tree.generatorTree();
     this.treeNode = treeNode
+
+    this.containerEl?.el?.child(treeNode)
+
     // const genSummarizeButton = this.generateArticleButton()
     // treeNode.insertBefore(genSummarizeButton.el, treeNode.firstChild)
     // document.querySelector(`#${this.domId}`)?.appendChild(genSummarizeButton.el);
-    document.querySelector(`#${this.domId}`)?.appendChild(treeNode);
-    this.insertStyle(treeStyle, this.treeStyleId)
+    console.log(this.containerEl?.el?.el)
+    document.querySelector(`#${this.domId}`)?.appendChild(this.containerEl?.el?.el);
+    this.insertStyle(treeStyle + this.containerEl.getStyle(), this.treeStyleId)
+
+  
     document.querySelector(`.${closeClassName}`)?.addEventListener('click', () => {
       this.handleClose()
     });
@@ -153,6 +185,8 @@ class Outline {
       };
       item.addEventListener('click', handleClick);
     });
+
+    this.initTabs()
   }
 
   handleClose = () => { 

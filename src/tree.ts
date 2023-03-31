@@ -58,7 +58,7 @@ class Tree {
     const activeItemClassName = this.activeItemClassName
 
     const wrap = document.createElement('div');
-    wrap.className = wrapClassName;
+    wrap.className = `${prefix}-tree-content`;
     // wrap.setAttribute('style', `display: none`);
     const padding = 16;
     const { domStr: closedomStr, style: closeStyle } = this.generatorClose();

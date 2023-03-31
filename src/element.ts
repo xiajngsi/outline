@@ -27,6 +27,10 @@ class ElementClass  {
     this.setStyle('display', 'block')
   }
 
+  addClassName(className: string) {
+    this.el?.classList.add(className)
+  }
+
   active(activeClassName = 'active') {
     this.el?.classList.add(activeClassName)
   }
