@@ -22,6 +22,7 @@ export interface ClassNames {
   outlineItemClass: string,
   closeClassName: string
 }
+
 class Tree {
   treeData: TreeDataItem = {children: [], nodeName: ''}
   options: TreeOptions
@@ -187,14 +188,19 @@ class Tree {
     const queryStr = headsTag.map((item) => `${contentDomId} ${item}`).join(',');
     const curTagNodes: NodeListOf<HTMLElement> = document.querySelectorAll(queryStr);
     return Array.from(curTagNodes).map((curr, index) => {
-      const { nodeName, innerText } = curr;
+      const { nodeName } = curr;
       const dataId = curr.dataset.id;
+      let text = curr.innerText;
+      const tagName = curr.tagName.toLowerCase();
+      if (['input', 'textarea'].includes(tagName)) {
+        text= (curr as any).value; // 对于 input 和 textarea 使用 value 属性
+      }
       const headNumber = getHeaderNumber(curr);
       const item = {
         // ...curr,
         nodeName,
         headNumber,
-        innerText,
+        innerText: text,
         tagNodeIndex: dataId || this.getTagNodeIndex(index),
         children: []
       };

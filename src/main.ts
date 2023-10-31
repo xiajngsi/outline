@@ -89,8 +89,9 @@ class Outline {
         resultOptions.headerTags = new Array(6).map((item, index) => `${headTagPrefix}${index}`)
       } if (host === 'chat.openai.com') {
         resultOptions.headerTags = ['div[data-message-author-role="user"] > div']
-      } 
-      else {
+      } if (host === 'idealab.alibaba-inc.com') {
+        resultOptions.headerTags = ['.prompt-box-desc textarea[disabled]']
+      } else {
         resultOptions.headerTags = defaultOptions.headerTags
       }
     }
