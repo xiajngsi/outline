@@ -53,6 +53,18 @@ class ElementClass  {
     this.el?.appendChild(ele);
     return this
   }
+  prepend(arg: string | ElementClass | Node ) {
+    let ele: any = arg;
+    if (typeof arg === 'string') {
+      ele = document.createTextNode(arg);
+    } else if (arg instanceof ElementClass) {
+      ele = arg.el;
+    } 
+    this.el?.prepend(ele);
+    return this
+  }
+
+
 
   innerHTML(html: string) {
     if(this.el) {

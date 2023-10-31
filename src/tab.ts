@@ -22,7 +22,10 @@ export class Tab {
       const item = h('div', `${prefix}-tab-item`)
       item.innerHTML(tab.label)
       this.el.child(item)
-      this.el.addEvent('click', () => {
+      item.addEvent('click', () => {
+        this.el.el?.childNodes.forEach((node: any) => {
+          node.classList.remove('active')
+        })
         onClick(tab.value)
         item.addClassName('active')
       })
@@ -38,13 +41,14 @@ export class Tab {
         justify-content: space-between;
       }
       .${prefix}-tab-item {
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
+        padding: 2px 8px;
+        border-bottom: 1px solid #ccc;
         cursor: pointer;
+        font-size: 16px;
+        width: 100%;
       }
       .${prefix}-tab-item.active {
-        background-color: #ccc;
+        border-bottom: 1px solid #3245ff;
       }
     `
   }

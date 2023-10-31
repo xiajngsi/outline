@@ -87,7 +87,10 @@ class Outline {
         const headTagPrefix = 'ne-h';
         //@ts-ignore
         resultOptions.headerTags = new Array(6).map((item, index) => `${headTagPrefix}${index}`)
-      } else {
+      } if (host === 'chat.openai.com') {
+        resultOptions.headerTags = ['div[data-message-author-role="user"] > div']
+      } 
+      else {
         resultOptions.headerTags = defaultOptions.headerTags
       }
     }
@@ -122,7 +125,7 @@ class Outline {
     this.tabInstance = new Tab(this.options)
     this.tabInstance.generatorDom({tabs, onClick: this.handleTabClick})
     this.insertStyle(this.tabInstance.getStyle(), 'tabStyle')
-    this.containerEl?.el.child(this.tabInstance?.el?.el)
+    this.containerEl?.el.prepend(this.tabInstance?.el?.el)
   }
 
 

@@ -18,9 +18,9 @@ function isObject(item: any): item is object {
   return item && typeof item === 'object' && !Array.isArray(item);
 }
 
-
 export const getHeaderNumber = (node: {nodeName: string}) => {
-  return Number(node.nodeName.slice(-1))
+  const headerNum = Number(node.nodeName.slice(-1))
+  return isNaN(headerNum) ? 1 : headerNum
 };
 
 export const nodeAddAnchorName = (node: HTMLElement, tagNodeIndex: string) => {
