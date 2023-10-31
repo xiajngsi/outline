@@ -87,10 +87,12 @@ class Outline {
         const headTagPrefix = 'ne-h';
         //@ts-ignore
         resultOptions.headerTags = new Array(6).map((item, index) => `${headTagPrefix}${index}`)
-      } if (host === 'chat.openai.com') {
+      } else if (host === 'chat.openai.com') {
         resultOptions.headerTags = ['div[data-message-author-role="user"] > div']
-      } if (host === 'idealab.alibaba-inc.com') {
+      } else if (host === 'idealab.alibaba-inc.com') {
         resultOptions.headerTags = ['.prompt-box-desc textarea[disabled]']
+      } else if (host === 'xinghuo.xfyun.cn') {
+        resultOptions.headerTags = ['div[class^="chat-window_content_user"] p']
       } else {
         resultOptions.headerTags = defaultOptions.headerTags
       }
