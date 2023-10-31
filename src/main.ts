@@ -177,14 +177,14 @@ class Outline {
       this.handleClose()
     });
     document.querySelectorAll(`.${outlineItemClass}`).forEach((item) => {
-      const handleClick = () => {
+      const handleClick = (e: Event) => {
         // @ts-ignore
         const tag = item.dataset.tag!;
         const target = getHeadingEleByDataId(tag);
         if (target) {
           target.scrollIntoView({ behavior: 'smooth' });
         }
-        this.activeHandler();
+        this.activeHandler(e);
       };
       item.addEventListener('click', handleClick);
     });
@@ -224,7 +224,7 @@ class Outline {
     }
   }
 
-  activeHandler = () => {
+  activeHandler = (e: Event) => {
     const {outlineItemClass, activeItemClassName} = this.getClassNames()
     if(!this.tree) {
       return
@@ -233,6 +233,10 @@ class Outline {
     document.querySelectorAll(`.${outlineItemClass}`).forEach((node) => {
       node.classList.remove(activeItemClassName);
     });
+    if (e.currentTarget) {
+      (e.currentTarget as Element).classList.add(activeItemClassName)
+      return
+    }
 
     let lastDisNode;
     let viewFirstEleDis;
@@ -255,6 +259,7 @@ class Outline {
         lastDisNode = tags[viewFirstEleIndex - 1];
       }
     }
+    
     if(lastDisNode) {
       getOutlineItemByDataTag(lastDisNode.tagNodeIndex!)?.classList.add(activeItemClassName);
     }
