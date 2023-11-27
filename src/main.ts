@@ -186,6 +186,7 @@ class Outline {
 
 
   handleOpen = () => {
+    this.listenScroll()
     // this.getArticleContent()
     const options = this.transformOptions(this.originOptions)
     this.tree = new Tree(options, this.getClassNames())
@@ -224,7 +225,7 @@ class Outline {
         if (target) {
           target.scrollIntoView({ behavior: 'smooth' });
         }
-        // this.activeHandler(e);
+        this.activeHandler(e);
       };
       item.addEventListener('click', handleClick);
     });
@@ -238,14 +239,24 @@ class Outline {
     this.clearTreeStyle()  
     // @ts-ignore
     document.querySelector(`.${toggleClassName}`)?.style.setProperty('display', 'block');
+    this.removeListenScroll()
+  }
 
+  listenScroll = () => {
+    const scrollElementTag = getTags(ElementTagsType.scrollTags) as string
+    const scrollElement = document.querySelector(scrollElementTag) || window
+    scrollElement.addEventListener('scroll', this.activeHandler);
+  }
+
+  removeListenScroll = () => {
+    const scrollElementTag = getTags(ElementTagsType.scrollTags) as string
+    const scrollElement = document.querySelector(scrollElementTag) || window
+    scrollElement.removeEventListener('scroll', this.activeHandler);
   }
 
   events= () => {
     const { toggleClassName } = this.getClassNames()
-    const scrollElementTag = getTags(ElementTagsType.scrollTags) as string
-    const scrollElement = document.querySelector(scrollElementTag) || window
-    scrollElement.addEventListener('scroll', this.activeHandler);
+    
     document.querySelector(`.${toggleClassName}`)?.addEventListener('mouseenter', () => {
       this.handleOpen()
     });
