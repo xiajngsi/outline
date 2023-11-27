@@ -224,7 +224,7 @@ class Outline {
         if (target) {
           target.scrollIntoView({ behavior: 'smooth' });
         }
-        this.activeHandler(e);
+        // this.activeHandler(e);
       };
       item.addEventListener('click', handleClick);
     });
