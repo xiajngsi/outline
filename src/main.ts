@@ -38,6 +38,47 @@ function setStyle(innerStyle: string) {
   styleHtml += innerStyle;
 }
 
+enum ElementTagsType {
+  headerTags = 'headerTags',
+  scrollTags = 'scrollTags',
+  scrollTopHeight = 'scrollTopHeight'
+}
+
+interface ElementTags {
+  [ElementTagsType.headerTags]?: string[]
+  [ElementTagsType.scrollTags]?: string
+  [ElementTagsType.scrollTopHeight]?: number
+}
+
+const urlElementTags: Record<string, ElementTags> = {
+  'chat.openai.com': {
+    headerTags: ['div[data-message-author-role="user"] > div'],
+    scrollTags: 'div[class^="react-scroll-to-bottom"] div',
+    scrollTopHeight: 100
+  },
+  'idealab.alibaba-inc.com': {
+    headerTags: ['.prompt-box-desc textarea[disabled]'],
+    scrollTags: ''
+  },
+  'xinghuo.xfyun.cn': {
+    headerTags: ['div[class^="chat-window_content_user"] p'],
+    scrollTags: ''
+  },
+
+}
+
+const defaultUrlElementTags = {
+  headerTags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+  scrollTags: 'body',
+  [ElementTagsType.scrollTopHeight]: 50
+
+}
+
+const getTags = (type: ElementTagsType): string | string[] | undefined | number => {
+  const { host } = location  
+  return ((urlElementTags[host] as ElementTags) || defaultUrlElementTags)[type]
+}
+
 const tabs = [
   {label: '目录', value: 'toc'}, 
   {label: '总结', value: 'summarize'},
@@ -87,12 +128,8 @@ class Outline {
         const headTagPrefix = 'ne-h';
         //@ts-ignore
         resultOptions.headerTags = new Array(6).map((item, index) => `${headTagPrefix}${index}`)
-      } else if (host === 'chat.openai.com') {
-        resultOptions.headerTags = ['div[data-message-author-role="user"] > div']
-      } else if (host === 'idealab.alibaba-inc.com') {
-        resultOptions.headerTags = ['.prompt-box-desc textarea[disabled]']
-      } else if (host === 'xinghuo.xfyun.cn') {
-        resultOptions.headerTags = ['div[class^="chat-window_content_user"] p']
+      } else if (urlElementTags[host]) {
+        resultOptions.headerTags = getTags(ElementTagsType.headerTags) as string[]
       } else {
         resultOptions.headerTags = defaultOptions.headerTags
       }
@@ -192,7 +229,7 @@ class Outline {
       item.addEventListener('click', handleClick);
     });
 
-    this.initTabs()
+    // this.initTabs()
   }
 
   handleClose = () => { 
@@ -206,7 +243,9 @@ class Outline {
 
   events= () => {
     const { toggleClassName } = this.getClassNames()
-    window.addEventListener('scroll', this.activeHandler);
+    const scrollElementTag = getTags(ElementTagsType.scrollTags) as string
+    const scrollElement = document.querySelector(scrollElementTag) || window
+    scrollElement.addEventListener('scroll', this.activeHandler);
     document.querySelector(`.${toggleClassName}`)?.addEventListener('mouseenter', () => {
       this.handleOpen()
     });
@@ -236,7 +275,7 @@ class Outline {
     document.querySelectorAll(`.${outlineItemClass}`).forEach((node) => {
       node.classList.remove(activeItemClassName);
     });
-    if (e.currentTarget) {
+    if ((e.currentTarget as Element)?.classList.contains(outlineItemClass)) {
       (e.currentTarget as Element).classList.add(activeItemClassName)
       return
     }
@@ -256,7 +295,7 @@ class Outline {
       lastDisNode = tags[0];
     }
     if (viewFirstEleIndex > 0) {
-      if (viewFirstEleDis && viewFirstEleDis < 50) {
+      if (viewFirstEleDis && viewFirstEleDis < (getTags(ElementTagsType.scrollTopHeight) || defaultUrlElementTags.scrollTopHeight)) {
         lastDisNode = tags[viewFirstEleIndex];
       } else {
         lastDisNode = tags[viewFirstEleIndex - 1];
