@@ -69,7 +69,6 @@ const urlElementTags: Record<string, ElementTags> = {
 
 const defaultUrlElementTags = {
   headerTags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-  scrollTags: 'body',
   [ElementTagsType.scrollTopHeight]: 50
 
 }
@@ -244,8 +243,8 @@ class Outline {
 
   listenScroll = () => {
     const scrollElementTag = getTags(ElementTagsType.scrollTags) as string
-    const scrollElement = document.querySelector(scrollElementTag) || window
-    scrollElement.addEventListener('scroll', this.activeHandler);
+    const scrollElement = scrollElementTag ? document.querySelector(scrollElementTag) : window
+    scrollElement?.addEventListener('scroll', this.activeHandler);
   }
 
   removeListenScroll = () => {
@@ -286,7 +285,7 @@ class Outline {
     document.querySelectorAll(`.${outlineItemClass}`).forEach((node) => {
       node.classList.remove(activeItemClassName);
     });
-    if ((e.currentTarget as Element)?.classList.contains(outlineItemClass)) {
+    if ((e.currentTarget as Element)?.classList?.contains(outlineItemClass)) {
       (e.currentTarget as Element).classList.add(activeItemClassName)
       return
     }
